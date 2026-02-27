@@ -70,6 +70,10 @@ export default function Switchboard() {
     "switchboard-active",
     null
   );
+  const [oledMode, setOledMode] = useLocalStorage<boolean>(
+    "switchboard-oled",
+    false
+  );
 
   // Local UI state
   const [newTaskName, setNewTaskName] = useState("");
@@ -80,7 +84,7 @@ export default function Switchboard() {
   // Ref for tracking when the active task started
   const activeStartRef = useRef<number | null>(null);
 
-  // ─── Apply accent CSS variables ──────────────────────────────────────────
+  // ─── Apply accent CSS variables + OLED body color ─────────────────────────
 
   useEffect(() => {
     const accent = ACCENT_OPTIONS[accentIndex] ?? ACCENT_OPTIONS[0];
@@ -88,7 +92,12 @@ export default function Switchboard() {
     root.style.setProperty("--accent-h", String(accent.h));
     root.style.setProperty("--accent-s", accent.s);
     root.style.setProperty("--accent-l", accent.l);
-  }, [accentIndex]);
+    // Update body background for OLED mode
+    document.body.style.backgroundColor = oledMode ? "#000000" : "#020617";
+    // Update theme-color meta tag
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", oledMode ? "#000000" : "#020617");
+  }, [accentIndex, oledMode]);
 
   // ─── Timer interval ─────────────────────────────────────────────────────
 
@@ -193,9 +202,26 @@ export default function Switchboard() {
 
   const accent = ACCENT_OPTIONS[accentIndex] ?? ACCENT_OPTIONS[0];
   const accentColor = `hsl(${accent.h}, ${accent.s}, ${accent.l})`;
-  const accentBg = `hsl(${accent.h}, ${accent.s}, 15%)`;
-  const accentBorder = `hsl(${accent.h}, ${accent.s}, 25%)`;
+  const accentBg = oledMode
+    ? `hsl(${accent.h}, ${accent.s}, 8%)`
+    : `hsl(${accent.h}, ${accent.s}, 15%)`;
+  const accentBorder = oledMode
+    ? `hsl(${accent.h}, ${accent.s}, 18%)`
+    : `hsl(${accent.h}, ${accent.s}, 25%)`;
   const accentGlow = `hsl(${accent.h}, ${accent.s}, 50%, 0.15)`;
+
+  // ─── OLED-aware surface colors ──────────────────────────────────────────
+
+  const bgMain = oledMode ? "#000000" : "rgb(2 6 23)"; // slate-950
+  const bgCard = oledMode ? "#000000" : "rgb(15 23 42)"; // slate-900
+  const bgElevated = oledMode ? "#0a0a0a" : "rgb(15 23 42)"; // slightly lifted
+  const bgInput = oledMode ? "#0a0a0a" : "rgb(15 23 42 / 1)";
+  const borderDefault = oledMode ? "rgb(20 20 20)" : "rgb(30 41 59)";
+  const borderSubtle = oledMode ? "rgb(30 30 30)" : "rgb(30 41 59)";
+  const bgButton = oledMode ? "rgb(20 20 20)" : "rgb(30 41 59)";
+  const bgModal = oledMode ? "#000000" : "rgb(15 23 42)";
+  const borderModal = oledMode ? "rgb(30 30 30)" : "rgb(30 41 59)";
+  const bgCopyBlock = oledMode ? "#0a0a0a" : "rgb(2 6 23)";
 
   // ─── Render ─────────────────────────────────────────────────────────────
 
@@ -208,7 +234,10 @@ export default function Switchboard() {
   }
 
   return (
-    <main className="h-screen bg-slate-950 flex flex-col overflow-hidden">
+    <main
+      className="h-screen flex flex-col overflow-hidden"
+      style={{ backgroundColor: bgMain }}
+    >
       {/* ─── Header ──────────────────────────────────────────────────────── */}
       <header className="flex-shrink-0 px-4 pt-4 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -240,8 +269,8 @@ export default function Switchboard() {
         <div
           className="rounded-2xl p-4 border transition-all duration-300"
           style={{
-            backgroundColor: activeTask ? accentBg : "rgb(15 23 42)",
-            borderColor: activeTask ? accentBorder : "rgb(30 41 59)",
+            backgroundColor: activeTask ? accentBg : bgCard,
+            borderColor: activeTask ? accentBorder : borderDefault,
             boxShadow: activeTask ? `0 0 24px ${accentGlow}` : "none",
           }}
         >
@@ -307,8 +336,8 @@ export default function Switchboard() {
                   }}
                   className="h-12 rounded-xl font-medium text-sm transition-all touch-none active:scale-95 border"
                   style={{
-                    backgroundColor: isActive ? accentBg : "rgb(15 23 42)",
-                    borderColor: isActive ? accentBorder : "rgb(30 41 59)",
+                    backgroundColor: isActive ? accentBg : bgCard,
+                    borderColor: isActive ? accentBorder : borderDefault,
                     color: isActive ? accentColor : "rgb(203 213 225)",
                   }}
                 >
@@ -331,7 +360,13 @@ export default function Switchboard() {
               onChange={(e) => setNewTaskName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddCustomTask()}
               placeholder="Task name or #12345"
-              className="flex-1 h-12 px-4 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-slate-600 transition-colors"
+              className="flex-1 h-12 px-4 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none transition-colors"
+              style={{
+                backgroundColor: bgInput,
+                borderWidth: "1px",
+                borderStyle: "solid",
+                borderColor: borderDefault,
+              }}
             />
             <button
               onClick={handleAddCustomTask}
@@ -340,7 +375,7 @@ export default function Switchboard() {
               style={{
                 backgroundColor: newTaskName.trim()
                   ? accentColor
-                  : "rgb(30 41 59)",
+                  : bgButton,
               }}
               aria-label="Add task"
             >
@@ -363,12 +398,8 @@ export default function Switchboard() {
                     key={task.id}
                     className="flex items-center gap-3 p-3 rounded-xl border transition-all"
                     style={{
-                      backgroundColor: isActive
-                        ? accentBg
-                        : "rgb(15 23 42)",
-                      borderColor: isActive
-                        ? accentBorder
-                        : "rgb(30 41 59)",
+                      backgroundColor: isActive ? accentBg : bgCard,
+                      borderColor: isActive ? accentBorder : borderDefault,
                     }}
                   >
                     {/* Play/Pause Toggle */}
@@ -378,7 +409,7 @@ export default function Switchboard() {
                       style={{
                         backgroundColor: isActive
                           ? accentColor
-                          : "rgb(30 41 59)",
+                          : bgButton,
                         color: isActive ? "white" : "rgb(148 163 184)",
                       }}
                       aria-label={isActive ? "Pause task" : "Start task"}
@@ -461,7 +492,8 @@ export default function Switchboard() {
           onClick={() => setShowSettings(false)}
         >
           <div
-            className="bg-slate-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 pb-8"
+            className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 pb-8"
+            style={{ backgroundColor: bgModal }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -489,11 +521,13 @@ export default function Switchboard() {
                     className="h-12 rounded-xl font-medium text-sm transition-all touch-none active:scale-95 border flex items-center justify-center gap-2"
                     style={{
                       backgroundColor: isSelected
-                        ? `hsl(${opt.h}, ${opt.s}, 15%)`
-                        : "rgb(15 23 42)",
+                        ? oledMode
+                          ? `hsl(${opt.h}, ${opt.s}, 8%)`
+                          : `hsl(${opt.h}, ${opt.s}, 15%)`
+                        : bgCard,
                       borderColor: isSelected
                         ? `hsl(${opt.h}, ${opt.s}, 30%)`
-                        : "rgb(30 41 59)",
+                        : borderDefault,
                       color: isSelected ? color : "rgb(148 163 184)",
                     }}
                   >
@@ -507,7 +541,53 @@ export default function Switchboard() {
               })}
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-800">
+            {/* OLED Mode Toggle */}
+            <div className="mt-5">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
+                Display
+              </p>
+              <button
+                onClick={() => setOledMode((prev) => !prev)}
+                className="w-full h-12 rounded-xl font-medium text-sm transition-all touch-none active:scale-95 border flex items-center justify-between px-4"
+                style={{
+                  backgroundColor: oledMode ? bgCard : bgCard,
+                  borderColor: oledMode ? accentBorder : borderDefault,
+                }}
+              >
+                <span className="flex items-center gap-2">
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{
+                      backgroundColor: oledMode ? accentColor : "rgb(100 116 139)",
+                    }}
+                  />
+                  <span
+                    style={{
+                      color: oledMode ? "white" : "rgb(148 163 184)",
+                    }}
+                  >
+                    OLED Black Mode
+                  </span>
+                </span>
+                <span
+                  className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                  style={{
+                    backgroundColor: oledMode ? accentColor : "rgb(51 65 85)",
+                  }}
+                >
+                  <span
+                    className="inline-block h-4 w-4 rounded-full bg-white transition-transform"
+                    style={{
+                      transform: oledMode
+                        ? "translateX(1.375rem)"
+                        : "translateX(0.25rem)",
+                    }}
+                  />
+                </span>
+              </button>
+            </div>
+
+            <div className="mt-6 pt-4" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: borderSubtle }}>
               <button
                 onClick={() => {
                   if (
@@ -536,7 +616,8 @@ export default function Switchboard() {
           onClick={() => setShowSummary(false)}
         >
           <div
-            className="bg-slate-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 pb-8 max-h-[80vh] flex flex-col"
+            className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 pb-8 max-h-[80vh] flex flex-col"
+            style={{ backgroundColor: bgModal }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -577,7 +658,10 @@ export default function Switchboard() {
                             {formatTime(task.elapsed)}
                           </span>
                         </div>
-                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-2 rounded-full overflow-hidden"
+                          style={{ backgroundColor: bgButton }}
+                        >
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{
@@ -593,7 +677,10 @@ export default function Switchboard() {
                     );
                   })}
 
-                <div className="pt-3 mt-3 border-t border-slate-800">
+                <div
+                  className="pt-3 mt-3"
+                  style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: borderSubtle }}
+                >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-white">
                       Total
@@ -612,7 +699,10 @@ export default function Switchboard() {
                   <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
                     Copy for Billing
                   </p>
-                  <div className="bg-slate-950 rounded-xl p-3 font-timer text-xs text-slate-300 space-y-1 select-all">
+                  <div
+                    className="rounded-xl p-3 font-timer text-xs text-slate-300 space-y-1 select-all"
+                    style={{ backgroundColor: bgCopyBlock }}
+                  >
                     {tasks
                       .filter((t) => t.elapsed > 0)
                       .map((t) => (
@@ -620,7 +710,10 @@ export default function Switchboard() {
                           {t.name}: {formatTime(t.elapsed)}
                         </div>
                       ))}
-                    <div className="border-t border-slate-800 pt-1 mt-1 text-white font-bold">
+                    <div
+                      className="pt-1 mt-1 text-white font-bold"
+                      style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: borderSubtle }}
+                    >
                       Total: {formatTime(totalTime)}
                     </div>
                   </div>

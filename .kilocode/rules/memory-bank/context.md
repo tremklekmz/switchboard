@@ -4,7 +4,7 @@
 
 **App Status**: ✅ Switchboard time-tracking app built and passing all checks
 
-The project has been transformed from a blank Next.js starter into "Switchboard," a professional mobile-first time-tracking application with exclusive timer logic, localStorage persistence, customizable accent colors, and Azure DevOps work item support.
+The project has been transformed from a blank Next.js starter into "Switchboard," a professional mobile-first time-tracking application with exclusive timer logic, localStorage persistence, customizable accent colors, OLED black mode, and Azure DevOps work item support.
 
 ## Recently Completed
 
@@ -16,13 +16,14 @@ The project has been transformed from a blank Next.js starter into "Switchboard,
 - [x] Recipe system for common features
 - [x] Built Switchboard time-tracking app
 - [x] Exclusive timer logic (only one task active at a time)
-- [x] localStorage persistence for tasks, active task, and accent color
+- [x] localStorage persistence for tasks, active task, accent color, and OLED mode
 - [x] Quick-switch buttons for Meeting, Admin, Email
 - [x] Custom task / Azure DevOps work item input
 - [x] 6 accent color themes (Emerald, Blue, Purple, Orange, Rose, Cyan)
-- [x] Settings modal with accent color picker and clear-all
+- [x] Settings modal with accent color picker, OLED toggle, and clear-all
 - [x] Daily summary modal with progress bars and copy-for-billing section
 - [x] Dark mode base (slate-950) with CSS variable-driven theming
+- [x] OLED Black Mode toggle — pure #000000 backgrounds for AMOLED screens
 - [x] Mobile-first responsive design with touch-optimized tap targets
 - [x] Hydration-safe useLocalStorage hook using useSyncExternalStore
 - [x] All typecheck and lint checks passing
@@ -53,8 +54,9 @@ The Switchboard app is fully functional. Potential next steps:
 - **Exclusive timer**: Starting any task automatically pauses the previously active one
 - **CSS variables**: Accent color is applied via `--accent-h`, `--accent-s`, `--accent-l` on `:root`
 - **useSyncExternalStore**: Used for hydration detection to avoid React 19 lint warnings about setState in effects
-- **Inline styles**: Used for dynamic accent color application (not Tailwind classes) to support runtime theme switching
-- **localStorage keys**: `switchboard-tasks`, `switchboard-active`, `switchboard-accent`
+- **Inline styles**: Used for dynamic accent color and OLED mode application (not Tailwind classes) to support runtime theme switching
+- **OLED mode**: Persisted via `switchboard-oled` localStorage key. When enabled, replaces all slate-950/900 backgrounds with pure `#000000` and `#0a0a0a`, and adjusts borders to very dark grays. Also updates `document.body.style.backgroundColor` and the `<meta name="theme-color">` tag dynamically.
+- **localStorage keys**: `switchboard-tasks`, `switchboard-active`, `switchboard-accent`, `switchboard-oled`
 
 ## Session History
 
@@ -62,3 +64,4 @@ The Switchboard app is fully functional. Potential next steps:
 |------|---------|
 | Initial | Template created with base setup |
 | 2026-02-27 | Built Switchboard time-tracking app with exclusive timers, localStorage persistence, accent color theming, daily summary, and mobile-first UI |
+| 2026-02-27 | Added OLED Black Mode toggle in Settings — pure black backgrounds for AMOLED/OLED screens, persisted to localStorage |
