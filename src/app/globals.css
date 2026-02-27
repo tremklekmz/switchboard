@@ -1,1 +1,65 @@
 @import "tailwindcss";
+
+:root {
+  --accent-h: 160;
+  --accent-s: 84%;
+  --accent-l: 39%;
+  --accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+  --accent-light: hsl(var(--accent-h), var(--accent-s), 55%);
+  --accent-dark: hsl(var(--accent-h), var(--accent-s), 25%);
+  --accent-bg: hsl(var(--accent-h), var(--accent-s), 15%);
+  --accent-glow: hsl(var(--accent-h), var(--accent-s), 50% / 0.2);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  overflow: hidden;
+}
+
+body {
+  background-color: #020617;
+  color: #e2e8f0;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  overscroll-behavior: none;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Monospace font for timers */
+.font-timer {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pulse animation for active timer */
+@keyframes pulse-accent {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+.animate-pulse-accent {
+  animation: pulse-accent 2s ease-in-out infinite;
+}

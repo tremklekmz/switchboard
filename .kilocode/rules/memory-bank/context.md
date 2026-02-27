@@ -1,10 +1,10 @@
-# Active Context: Next.js Starter Template
+# Active Context: Switchboard Time Tracker
 
 ## Current State
 
-**Template Status**: ✅ Ready for development
+**App Status**: ✅ Switchboard time-tracking app built and passing all checks
 
-The template is a clean Next.js 16 starter with TypeScript and Tailwind CSS 4. It's ready for AI-assisted expansion to build any type of application.
+The project has been transformed from a blank Next.js starter into "Switchboard," a professional mobile-first time-tracking application with exclusive timer logic, localStorage persistence, customizable accent colors, and Azure DevOps work item support.
 
 ## Recently Completed
 
@@ -14,74 +14,51 @@ The template is a clean Next.js 16 starter with TypeScript and Tailwind CSS 4. I
 - [x] ESLint configuration
 - [x] Memory bank documentation
 - [x] Recipe system for common features
+- [x] Built Switchboard time-tracking app
+- [x] Exclusive timer logic (only one task active at a time)
+- [x] localStorage persistence for tasks, active task, and accent color
+- [x] Quick-switch buttons for Meeting, Admin, Email
+- [x] Custom task / Azure DevOps work item input
+- [x] 6 accent color themes (Emerald, Blue, Purple, Orange, Rose, Cyan)
+- [x] Settings modal with accent color picker and clear-all
+- [x] Daily summary modal with progress bars and copy-for-billing section
+- [x] Dark mode base (slate-950) with CSS variable-driven theming
+- [x] Mobile-first responsive design with touch-optimized tap targets
+- [x] Hydration-safe useLocalStorage hook using useSyncExternalStore
+- [x] All typecheck and lint checks passing
+- [x] Production build succeeds
 
 ## Current Structure
 
 | File/Directory | Purpose | Status |
 |----------------|---------|--------|
-| `src/app/page.tsx` | Home page | ✅ Ready |
-| `src/app/layout.tsx` | Root layout | ✅ Ready |
-| `src/app/globals.css` | Global styles | ✅ Ready |
+| `src/app/page.tsx` | Switchboard main app (client component) | ✅ Ready |
+| `src/app/layout.tsx` | Root layout with Switchboard metadata | ✅ Ready |
+| `src/app/globals.css` | Dark theme, CSS variables, custom scrollbar, animations | ✅ Ready |
+| `src/lib/useLocalStorage.ts` | Hydration-safe localStorage hook + useHydrated | ✅ Ready |
 | `.kilocode/` | AI context & recipes | ✅ Ready |
 
 ## Current Focus
 
-The template is ready. Next steps depend on user requirements:
+The Switchboard app is fully functional. Potential next steps:
 
-1. What type of application to build
-2. What features are needed
-3. Design/branding preferences
+1. Add task categories or color-coding per task
+2. Add export/import functionality for time data
+3. Add weekly/monthly summary views
+4. Add keyboard shortcuts for power users
+5. Add sound/haptic feedback on timer start/stop
 
-## Quick Start Guide
+## Key Technical Decisions
 
-### To add a new page:
-
-Create a file at `src/app/[route]/page.tsx`:
-```tsx
-export default function NewPage() {
-  return <div>New page content</div>;
-}
-```
-
-### To add components:
-
-Create `src/components/` directory and add components:
-```tsx
-// src/components/ui/Button.tsx
-export function Button({ children }: { children: React.ReactNode }) {
-  return <button className="px-4 py-2 bg-blue-600 text-white rounded">{children}</button>;
-}
-```
-
-### To add a database:
-
-Follow `.kilocode/recipes/add-database.md`
-
-### To add API routes:
-
-Create `src/app/api/[route]/route.ts`:
-```tsx
-import { NextResponse } from "next/server";
-
-export async function GET() {
-  return NextResponse.json({ message: "Hello" });
-}
-```
-
-## Available Recipes
-
-| Recipe | File | Use Case |
-|--------|------|----------|
-| Add Database | `.kilocode/recipes/add-database.md` | Data persistence with Drizzle + SQLite |
-
-## Pending Improvements
-
-- [ ] Add more recipes (auth, email, etc.)
-- [ ] Add example components
-- [ ] Add testing setup recipe
+- **Exclusive timer**: Starting any task automatically pauses the previously active one
+- **CSS variables**: Accent color is applied via `--accent-h`, `--accent-s`, `--accent-l` on `:root`
+- **useSyncExternalStore**: Used for hydration detection to avoid React 19 lint warnings about setState in effects
+- **Inline styles**: Used for dynamic accent color application (not Tailwind classes) to support runtime theme switching
+- **localStorage keys**: `switchboard-tasks`, `switchboard-active`, `switchboard-accent`
 
 ## Session History
 
 | Date | Changes |
 |------|---------|
 | Initial | Template created with base setup |
+| 2026-02-27 | Built Switchboard time-tracking app with exclusive timers, localStorage persistence, accent color theming, daily summary, and mobile-first UI |
