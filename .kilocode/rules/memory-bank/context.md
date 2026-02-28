@@ -32,6 +32,7 @@ The project has been transformed from a blank Next.js starter into "Switchboard,
 - [x] Hydration-safe useLocalStorage hook using useSyncExternalStore
 - [x] All typecheck and lint checks passing
 - [x] Production build succeeds
+- [x] Quick switch entries now stretch full width with flex layout when fewer than 3 items
 
 ## Current Structure
 
@@ -79,3 +80,4 @@ The Switchboard app is fully functional. Potential next steps:
 | 2026-02-27 | Added OLED Black Mode toggle in Settings — pure black backgrounds for AMOLED/OLED screens, persisted to localStorage |
 | 2026-02-28 | Refactored accent colors from HSL to oklch format with CSS relative colors; added custom color picker with hex input |
 | 2026-02-28 | Made quick access tasks customizable in Settings — users can now edit, add, remove, and save up to 6 quick tasks |
+| 2026-02-28 | Changed quick switch layout from fixed grid to flexbox — buttons now stretch full width when fewer than 3 items |
