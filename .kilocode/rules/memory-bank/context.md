@@ -33,6 +33,7 @@ The project has been transformed from a blank Next.js starter into "Switchboard,
 - [x] All typecheck and lint checks passing
 - [x] Production build succeeds
 - [x] Quick switch entries now stretch full width with flex layout when fewer than 3 items
+- [x] **DevOps URL links** — configure a URL template in settings, work item IDs become clickable links
 
 ## Current Structure
 
@@ -69,7 +70,8 @@ The Switchboard app is fully functional. Potential next steps:
 - **OLED mode**: Persisted via `switchboard-oled` localStorage key. When enabled, replaces all slate-950/900 backgrounds with pure `#000000` and `#0a0a0a`, and adjusts borders to very dark grays. Also updates `document.body.style.backgroundColor` and the `<meta name="theme-color">` tag dynamically.
 - **Accent State**: Stored as `AccentState` interface with `presetIndex` and `customColor` properties
 - **Custom Color**: Users can pick any color via native color picker; hex is converted to oklch for storage
-- **localStorage keys**: `switchboard-tasks`, `switchboard-active`, `switchboard-accent`, `switchboard-oled`, `switchboard-quick-tasks`
+- **localStorage keys**: `switchboard-tasks`, `switchboard-active`, `switchboard-accent`, `switchboard-oled`, `switchboard-quick-tasks`, `switchboard-devops-template`
+- **DevOps URL Template**: Configurable URL pattern with `{id}` placeholder (e.g., `https://dev.azure.com/org/project/_workitems/edit/{id}`). When set, DevOps tasks render as clickable links opening in new tab.
 
 ## Session History
 
@@ -81,3 +83,4 @@ The Switchboard app is fully functional. Potential next steps:
 | 2026-02-28 | Refactored accent colors from HSL to oklch format with CSS relative colors; added custom color picker with hex input |
 | 2026-02-28 | Made quick access tasks customizable in Settings — users can now edit, add, remove, and save up to 6 quick tasks |
 | 2026-02-28 | Changed quick switch layout from fixed grid to flexbox — buttons now stretch full width when fewer than 3 items |
+| 2026-02-28 | Added DevOps URL template feature — work item tasks become clickable links when URL template is configured in settings |

@@ -21,6 +21,7 @@ interface Task {
   name: string;
   elapsed: number; // milliseconds
   isDevOps: boolean;
+  workItemId?: string; // Extracted ID from WI #12345 for link generation
 }
 
 interface AccentOption {
@@ -119,6 +120,10 @@ export default function Switchboard() {
   const [quickTasks, setQuickTasks] = useLocalStorage<string[]>(
     "switchboard-quick-tasks",
     DEFAULT_QUICK_TASKS
+  );
+  const [devOpsUrlTemplate, setDevOpsUrlTemplate] = useLocalStorage<string>(
+    "switchboard-devops-template",
+    ""
   );
 
   // Local UI state
@@ -219,11 +224,21 @@ export default function Switchboard() {
       );
       if (exists) return;
 
+      // Extract work item ID for DevOps tasks
+      let workItemId: string | undefined;
+      if (isDevOps) {
+        const match = trimmed.match(/#(\d+)/);
+        if (match) {
+          workItemId = match[1];
+        }
+      }
+
       const task: Task = {
         id: generateId(),
         name: trimmed,
         elapsed: 0,
         isDevOps,
+        workItemId,
       };
       setTasks((prev) => [...prev, task]);
     },
@@ -530,14 +545,29 @@ export default function Switchboard() {
 
                     {/* Task Info */}
                     <div className="flex-1 min-w-0">
-                      <p
-                        className="font-medium text-sm truncate"
-                        style={{
-                          color: isActive ? "white" : "rgb(203 213 225)",
-                        }}
-                      >
-                        {task.name}
-                      </p>
+                      {task.isDevOps && devOpsUrlTemplate && task.workItemId ? (
+                        <a
+                          href={devOpsUrlTemplate.replace("{id}", task.workItemId)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-sm truncate hover:underline block"
+                          style={{
+                            color: isActive ? accentColor : "rgb(203 213 225)",
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {task.name}
+                        </a>
+                      ) : (
+                        <p
+                          className="font-medium text-sm truncate"
+                          style={{
+                            color: isActive ? "white" : "rgb(203 213 225)",
+                          }}
+                        >
+                          {task.name}
+                        </p>
+                      )}
                       <p
                         className="font-timer text-xs mt-0.5"
                         style={{
@@ -761,6 +791,31 @@ export default function Switchboard() {
                   />
                 </span>
               </button>
+            </div>
+
+            {/* DevOps URL Template */}
+            <div className="mt-5">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
+                DevOps Integration
+              </p>
+              <div
+                className="p-3 rounded-xl border space-y-3"
+                style={{ backgroundColor: bgCard, borderColor: borderDefault }}
+              >
+                <p className="text-sm text-slate-300">
+                  URL template for work item links
+                </p>
+                <input
+                  type="text"
+                  value={devOpsUrlTemplate}
+                  onChange={(e) => setDevOpsUrlTemplate(e.target.value)}
+                  placeholder="https://dev.azure.com/org/project/_workitems/edit/{id}"
+                  className="w-full px-3 py-2 rounded-lg text-sm text-white bg-slate-800 border border-slate-700 focus:outline-none focus:border-slate-500"
+                />
+                <p className="text-xs text-slate-500">
+                  Use {"{id}"} as placeholder for work item number
+                </p>
+              </div>
             </div>
 
             {/* Quick Tasks Editor */}
