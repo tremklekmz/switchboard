@@ -25,21 +25,26 @@ interface Task {
 
 interface AccentOption {
   name: string;
-  h: number;
-  s: string;
-  l: string;
+  oklch: string; // e.g., "oklch(60% 0.15 160)"
+}
+
+interface AccentState {
+  presetIndex: number;
+  customColor: string | null; // oklch string for custom color
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const ACCENT_OPTIONS: AccentOption[] = [
-  { name: "Emerald", h: 160, s: "84%", l: "39%" },
-  { name: "Blue", h: 217, s: "91%", l: "60%" },
-  { name: "Purple", h: 271, s: "81%", l: "56%" },
-  { name: "Orange", h: 25, s: "95%", l: "53%" },
-  { name: "Rose", h: 347, s: "77%", l: "50%" },
-  { name: "Cyan", h: 187, s: "85%", l: "43%" },
+  { name: "Emerald", oklch: "oklch(60% 0.15 160)" },
+  { name: "Blue", oklch: "oklch(60% 0.15 250)" },
+  { name: "Purple", oklch: "oklch(60% 0.18 300)" },
+  { name: "Orange", oklch: "oklch(65% 0.18 50)" },
+  { name: "Rose", oklch: "oklch(60% 0.18 15)" },
+  { name: "Cyan", oklch: "oklch(65% 0.12 200)" },
 ];
+
+const DEFAULT_CUSTOM_COLOR = "oklch(60% 0.15 160)";
 
 const QUICK_TASKS = ["Meeting", "Admin", "Email"];
 
@@ -57,14 +62,51 @@ function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+/**
+ * Convert hex color to oklch string
+ * Uses a simple approximation via CSS getComputedStyle
+ */
+function hexToOklch(hex: string): string {
+  // Remove # if present
+  const cleanHex = hex.replace("#", "");
+  const r = parseInt(cleanHex.substring(0, 2), 16) / 255;
+  const g = parseInt(cleanHex.substring(2, 4), 16) / 255;
+  const b = parseInt(cleanHex.substring(4, 6), 16) / 255;
+
+  // Approximate oklch conversion (simplified)
+  // For better accuracy, we use CSS color-mix in the actual rendering
+  // but this gives us a usable oklch approximation
+  const lr = r <= 0.04045 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+  const lg = g <= 0.04045 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+  const lb = b <= 0.04045 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+
+  const l = 0.412165612 * lr + 0.536275208 * lg + 0.0514575653 * lb;
+  const m = 0.211859107 * lr + 0.6807189584 * lg + 0.107406579 * lb;
+  const s = 0.0883097947 * lr + 0.2818474174 * lg + 0.6302613616 * lb;
+
+  const l_ = Math.cbrt(l);
+  const m_ = Math.cbrt(m);
+  const s_ = Math.cbrt(s);
+
+  const L = 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_;
+  const a = 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_;
+  const b_ = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_;
+
+  const C = Math.sqrt(a * a + b_ * b_);
+  let h = (Math.atan2(b_, a) * 180) / Math.PI;
+  if (h < 0) h += 360;
+
+  return `oklch(${Math.round(L * 100)}% ${Math.round(C * 1000) / 1000} ${Math.round(h)})`;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Switchboard() {
   // Persisted state
   const [tasks, setTasks] = useLocalStorage<Task[]>("switchboard-tasks", []);
-  const [accentIndex, setAccentIndex] = useLocalStorage<number>(
+  const [accentState, setAccentState] = useLocalStorage<AccentState>(
     "switchboard-accent",
-    0
+    { presetIndex: 0, customColor: null }
   );
   const [activeTaskId, setActiveTaskId] = useLocalStorage<string | null>(
     "switchboard-active",
@@ -79,6 +121,8 @@ export default function Switchboard() {
   const [newTaskName, setNewTaskName] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [showCustomColorPicker, setShowCustomColorPicker] = useState(false);
+  const [customColorHex, setCustomColorHex] = useState("#00a884");
   const mounted = useHydrated();
 
   // Ref for tracking when the active task started
@@ -87,17 +131,26 @@ export default function Switchboard() {
   // ─── Apply accent CSS variables + OLED body color ─────────────────────────
 
   useEffect(() => {
-    const accent = ACCENT_OPTIONS[accentIndex] ?? ACCENT_OPTIONS[0];
     const root = document.documentElement;
-    root.style.setProperty("--accent-h", String(accent.h));
-    root.style.setProperty("--accent-s", accent.s);
-    root.style.setProperty("--accent-l", accent.l);
+    let accentColor: string;
+
+    if (accentState.customColor) {
+      // Use custom color
+      accentColor = accentState.customColor;
+    } else {
+      // Use preset
+      const accent = ACCENT_OPTIONS[accentState.presetIndex] ?? ACCENT_OPTIONS[0];
+      accentColor = accent.oklch;
+    }
+
+    root.style.setProperty("--accent-base", accentColor);
+
     // Update body background for OLED mode
     document.body.style.backgroundColor = oledMode ? "#000000" : "#020617";
     // Update theme-color meta tag
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", oledMode ? "#000000" : "#020617");
-  }, [accentIndex, oledMode]);
+  }, [accentState, oledMode]);
 
   // ─── Timer interval ─────────────────────────────────────────────────────
 
@@ -199,16 +252,11 @@ export default function Switchboard() {
   const totalTime = tasks.reduce((sum, t) => sum + t.elapsed, 0);
 
   // ─── Accent color helpers ───────────────────────────────────────────────
-
-  const accent = ACCENT_OPTIONS[accentIndex] ?? ACCENT_OPTIONS[0];
-  const accentColor = `hsl(${accent.h}, ${accent.s}, ${accent.l})`;
-  const accentBg = oledMode
-    ? `hsl(${accent.h}, ${accent.s}, 8%)`
-    : `hsl(${accent.h}, ${accent.s}, 15%)`;
-  const accentBorder = oledMode
-    ? `hsl(${accent.h}, ${accent.s}, 18%)`
-    : `hsl(${accent.h}, ${accent.s}, 25%)`;
-  const accentGlow = `hsl(${accent.h}, ${accent.s}, 50%, 0.15)`;
+  // Use CSS variables for colors now - these are for reference
+  const accentColor = "var(--accent)";
+  const accentBg = "var(--accent-bg)";
+  const accentBorder = "oklch(from var(--accent-base) calc(l - 0.05) c h / 0.5)";
+  const accentGlow = "var(--accent-glow)";
 
   // ─── OLED-aware surface colors ──────────────────────────────────────────
 
@@ -222,6 +270,20 @@ export default function Switchboard() {
   const bgModal = oledMode ? "#000000" : "rgb(15 23 42)";
   const borderModal = oledMode ? "rgb(30 30 30)" : "rgb(30 41 59)";
   const bgCopyBlock = oledMode ? "#0a0a0a" : "rgb(2 6 23)";
+
+  // ─── Custom color handlers ──────────────────────────────────────────────
+
+  const handleSaveCustomColor = useCallback(() => {
+    const oklch = hexToOklch(customColorHex);
+    setAccentState({ presetIndex: -1, customColor: oklch });
+    setShowCustomColorPicker(false);
+  }, [customColorHex, setAccentState]);
+
+  const handleSelectPreset = useCallback((index: number) => {
+    setAccentState({ presetIndex: index, customColor: null });
+  }, [setAccentState]);
+
+  const isUsingCustomColor = accentState.customColor !== null;
 
   // ─── Render ─────────────────────────────────────────────────────────────
 
@@ -512,33 +574,102 @@ export default function Switchboard() {
             </p>
             <div className="grid grid-cols-3 gap-2">
               {ACCENT_OPTIONS.map((opt, i) => {
-                const isSelected = i === accentIndex;
-                const color = `hsl(${opt.h}, ${opt.s}, ${opt.l})`;
+                const isSelected = !isUsingCustomColor && i === accentState.presetIndex;
                 return (
                   <button
                     key={opt.name}
-                    onClick={() => setAccentIndex(i)}
+                    onClick={() => handleSelectPreset(i)}
                     className="h-12 rounded-xl font-medium text-sm transition-all touch-none active:scale-95 border flex items-center justify-center gap-2"
                     style={{
                       backgroundColor: isSelected
-                        ? oledMode
-                          ? `hsl(${opt.h}, ${opt.s}, 8%)`
-                          : `hsl(${opt.h}, ${opt.s}, 15%)`
+                        ? "oklch(from var(--accent-base) 0.15 c h / 0.25)"
                         : bgCard,
                       borderColor: isSelected
-                        ? `hsl(${opt.h}, ${opt.s}, 30%)`
+                        ? "oklch(from var(--accent-base) calc(l - 0.1) c h / 0.5)"
                         : borderDefault,
-                      color: isSelected ? color : "rgb(148 163 184)",
+                      color: isSelected ? accentColor : "rgb(148 163 184)",
                     }}
                   >
                     <span
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: color }}
+                      style={{ backgroundColor: opt.oklch }}
                     />
                     {opt.name}
                   </button>
                 );
               })}
+            </div>
+
+            {/* Custom Color Option */}
+            <div className="mt-3">
+              {showCustomColorPicker ? (
+                <div className="p-3 rounded-xl border space-y-3"
+                  style={{ backgroundColor: bgCard, borderColor: borderDefault }}
+                >
+                  <p className="text-sm text-slate-300">Pick a custom color</p>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={customColorHex}
+                      onChange={(e) => setCustomColorHex(e.target.value)}
+                      className="w-12 h-12 rounded-lg cursor-pointer border-0 p-0 bg-transparent"
+                    />
+                    <div className="flex-1">
+                      <p className="text-xs text-slate-500 mb-1">Hex Color</p>
+                      <input
+                        type="text"
+                        value={customColorHex}
+                        onChange={(e) => setCustomColorHex(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg text-sm text-white bg-slate-800 border border-slate-700 focus:outline-none focus:border-slate-500"
+                        placeholder="#00a884"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveCustomColor}
+                      className="flex-1 h-10 rounded-lg font-medium text-sm text-white transition-all touch-none active:scale-95"
+                      style={{ backgroundColor: accentColor }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setShowCustomColorPicker(false)}
+                      className="h-10 px-4 rounded-lg font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-all touch-none active:scale-95"
+                      style={{ backgroundColor: bgButton }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowCustomColorPicker(true)}
+                  className="w-full h-12 rounded-xl font-medium text-sm transition-all touch-none active:scale-95 border flex items-center justify-center gap-2"
+                  style={{
+                    backgroundColor: isUsingCustomColor
+                      ? "oklch(from var(--accent-base) 0.15 c h / 0.25)"
+                      : bgCard,
+                    borderColor: isUsingCustomColor
+                      ? "oklch(from var(--accent-base) calc(l - 0.1) c h / 0.5)"
+                      : borderDefault,
+                    color: isUsingCustomColor ? accentColor : "rgb(148 163 184)",
+                  }}
+                >
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{
+                      backgroundColor: isUsingCustomColor
+                        ? accentColor
+                        : "linear-gradient(135deg, #ff0000, #00ff00, #0000ff)",
+                      background: isUsingCustomColor
+                        ? accentColor
+                        : "linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1)",
+                    }}
+                  />
+                  {isUsingCustomColor ? "Custom" : "Custom Color"}
+                </button>
+              )}
             </div>
 
             {/* OLED Mode Toggle */}
