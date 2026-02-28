@@ -424,7 +424,7 @@ export default function Switchboard() {
           <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
             Quick Switch
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {quickTasks.map((name) => {
               const existing = tasks.find(
                 (t) => t.name.toLowerCase() === name.toLowerCase()
@@ -441,7 +441,7 @@ export default function Switchboard() {
                       addTask(name);
                     }
                   }}
-                  className="flex-1 h-12 rounded-xl font-medium text-sm transition-all touch-none active:scale-95 border"
+                  className="flex-1 basis-[30%] h-12 rounded-xl font-medium text-sm transition-all touch-none active:scale-95 border"
                   style={{
                     backgroundColor: isActive ? accentBg : bgCard,
                     borderColor: isActive ? accentBorder : borderDefault,
