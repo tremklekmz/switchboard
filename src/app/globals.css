@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --accent-h: 160;
-  --accent-s: 84%;
-  --accent-l: 39%;
-  --accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
-  --accent-light: hsl(var(--accent-h), var(--accent-s), 55%);
-  --accent-dark: hsl(var(--accent-h), var(--accent-s), 25%);
-  --accent-bg: hsl(var(--accent-h), var(--accent-s), 15%);
-  --accent-glow: hsl(var(--accent-h), var(--accent-s), 50% / 0.2);
+  /* Base accent color in oklch - will be set via JavaScript */
+  --accent-base: oklch(60% 0.15 160);
+  
+  /* Derived accent colors using relative color syntax */
+  --accent: var(--accent-base);
+  --accent-light: oklch(from var(--accent-base) calc(l + 0.15) c h);
+  --accent-dark: oklch(from var(--accent-base) calc(l - 0.15) c h);
+  --accent-bg: oklch(from var(--accent-base) 0.15 c h / 0.25);
+  --accent-glow: oklch(from var(--accent-base) l c h / 0.2);
 }
 
 * {
