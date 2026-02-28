@@ -46,7 +46,7 @@ const ACCENT_OPTIONS: AccentOption[] = [
 
 const DEFAULT_CUSTOM_COLOR = "oklch(60% 0.15 160)";
 
-const QUICK_TASKS = ["Meeting", "Admin", "Email"];
+const DEFAULT_QUICK_TASKS = ["Meeting", "Admin", "Email"];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -116,6 +116,10 @@ export default function Switchboard() {
     "switchboard-oled",
     false
   );
+  const [quickTasks, setQuickTasks] = useLocalStorage<string[]>(
+    "switchboard-quick-tasks",
+    DEFAULT_QUICK_TASKS
+  );
 
   // Local UI state
   const [newTaskName, setNewTaskName] = useState("");
@@ -123,6 +127,8 @@ export default function Switchboard() {
   const [showSummary, setShowSummary] = useState(false);
   const [showCustomColorPicker, setShowCustomColorPicker] = useState(false);
   const [customColorHex, setCustomColorHex] = useState("#00a884");
+  const [editingQuickTasks, setEditingQuickTasks] = useState(false);
+  const [quickTaskInputs, setQuickTaskInputs] = useState<string[]>(quickTasks);
   const mounted = useHydrated();
 
   // Ref for tracking when the active task started
@@ -285,6 +291,45 @@ export default function Switchboard() {
 
   const isUsingCustomColor = accentState.customColor !== null;
 
+  // ─── Quick Tasks handlers ─────────────────────────────────────────────────
+
+  const handleStartEditingQuickTasks = useCallback(() => {
+    setQuickTaskInputs(quickTasks);
+    setEditingQuickTasks(true);
+  }, [quickTasks]);
+
+  const handleSaveQuickTasks = useCallback(() => {
+    const validTasks = quickTaskInputs
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0)
+      .slice(0, 6); // Max 6 quick tasks
+    setQuickTasks(validTasks.length > 0 ? validTasks : DEFAULT_QUICK_TASKS);
+    setEditingQuickTasks(false);
+  }, [quickTaskInputs, setQuickTasks]);
+
+  const handleCancelEditingQuickTasks = useCallback(() => {
+    setEditingQuickTasks(false);
+    setQuickTaskInputs(quickTasks);
+  }, [quickTasks]);
+
+  const handleQuickTaskInputChange = useCallback((index: number, value: string) => {
+    setQuickTaskInputs((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  }, []);
+
+  const handleAddQuickTaskInput = useCallback(() => {
+    if (quickTaskInputs.length < 6) {
+      setQuickTaskInputs((prev) => [...prev, ""]);
+    }
+  }, [quickTaskInputs.length]);
+
+  const handleRemoveQuickTaskInput = useCallback((index: number) => {
+    setQuickTaskInputs((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   // ─── Render ─────────────────────────────────────────────────────────────
 
   if (!mounted) {
@@ -380,7 +425,7 @@ export default function Switchboard() {
             Quick Switch
           </p>
           <div className="grid grid-cols-3 gap-2">
-            {QUICK_TASKS.map((name) => {
+            {quickTasks.map((name) => {
               const existing = tasks.find(
                 (t) => t.name.toLowerCase() === name.toLowerCase()
               );
@@ -716,6 +761,96 @@ export default function Switchboard() {
                   />
                 </span>
               </button>
+            </div>
+
+            {/* Quick Tasks Editor */}
+            <div className="mt-5">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
+                Quick Access Tasks
+              </p>
+              {editingQuickTasks ? (
+                <div
+                  className="p-3 rounded-xl border space-y-3"
+                  style={{ backgroundColor: bgCard, borderColor: borderDefault }}
+                >
+                  <p className="text-sm text-slate-300">Edit quick tasks (max 6)</p>
+                  <div className="space-y-2">
+                    {quickTaskInputs.map((task, index) => (
+                      <div key={index} className="flex gap-2">
+                        <input
+                          type="text"
+                          value={task}
+                          onChange={(e) =>
+                            handleQuickTaskInputChange(index, e.target.value)
+                          }
+                          placeholder={`Task ${index + 1}`}
+                          className="flex-1 px-3 py-2 rounded-lg text-sm text-white bg-slate-800 border border-slate-700 focus:outline-none focus:border-slate-500"
+                        />
+                        <button
+                          onClick={() => handleRemoveQuickTaskInput(index)}
+                          className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                          aria-label="Remove task"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {quickTaskInputs.length < 6 && (
+                    <button
+                      onClick={handleAddQuickTaskInput}
+                      className="w-full h-10 rounded-lg font-medium text-sm border border-dashed flex items-center justify-center gap-2 text-slate-400 hover:text-white hover:border-slate-500 transition-all"
+                      style={{ borderColor: borderDefault }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Task
+                    </button>
+                  )}
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={handleSaveQuickTasks}
+                      className="flex-1 h-10 rounded-lg font-medium text-sm text-white transition-all touch-none active:scale-95"
+                      style={{ backgroundColor: accentColor }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancelEditingQuickTasks}
+                      className="h-10 px-4 rounded-lg font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-all touch-none active:scale-95"
+                      style={{ backgroundColor: bgButton }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleStartEditingQuickTasks}
+                  className="w-full rounded-xl border p-3 transition-all touch-none active:scale-95"
+                  style={{
+                    backgroundColor: bgCard,
+                    borderColor: borderDefault,
+                  }}
+                >
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {quickTasks.map((task) => (
+                      <span
+                        key={task}
+                        className="px-2 py-1 rounded-lg text-xs font-medium"
+                        style={{
+                          backgroundColor: accentBg,
+                          color: accentColor,
+                        }}
+                      >
+                        {task}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500 text-left">
+                    Tap to edit quick access tasks
+                  </p>
+                </button>
+              )}
             </div>
 
             <div className="mt-6 pt-4" style={{ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: borderSubtle }}>

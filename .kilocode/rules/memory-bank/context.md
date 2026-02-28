@@ -18,6 +18,7 @@ The project has been transformed from a blank Next.js starter into "Switchboard,
 - [x] Exclusive timer logic (only one task active at a time)
 - [x] localStorage persistence for tasks, active task, accent color, and OLED mode
 - [x] Quick-switch buttons for Meeting, Admin, Email
+- [x] **Customizable quick tasks** — edit in settings, supports up to 6 tasks
 - [x] Custom task / Azure DevOps work item input
 - [x] 6 accent color themes (Emerald, Blue, Purple, Orange, Rose, Cyan)
 - [x] **Refactored accent colors from HSL to oklch format**
@@ -67,7 +68,7 @@ The Switchboard app is fully functional. Potential next steps:
 - **OLED mode**: Persisted via `switchboard-oled` localStorage key. When enabled, replaces all slate-950/900 backgrounds with pure `#000000` and `#0a0a0a`, and adjusts borders to very dark grays. Also updates `document.body.style.backgroundColor` and the `<meta name="theme-color">` tag dynamically.
 - **Accent State**: Stored as `AccentState` interface with `presetIndex` and `customColor` properties
 - **Custom Color**: Users can pick any color via native color picker; hex is converted to oklch for storage
-- **localStorage keys**: `switchboard-tasks`, `switchboard-active`, `switchboard-accent`, `switchboard-oled`
+- **localStorage keys**: `switchboard-tasks`, `switchboard-active`, `switchboard-accent`, `switchboard-oled`, `switchboard-quick-tasks`
 
 ## Session History
 
@@ -77,3 +78,4 @@ The Switchboard app is fully functional. Potential next steps:
 | 2026-02-27 | Built Switchboard time-tracking app with exclusive timers, localStorage persistence, accent color theming, daily summary, and mobile-first UI |
 | 2026-02-27 | Added OLED Black Mode toggle in Settings — pure black backgrounds for AMOLED/OLED screens, persisted to localStorage |
 | 2026-02-28 | Refactored accent colors from HSL to oklch format with CSS relative colors; added custom color picker with hex input |
+| 2026-02-28 | Made quick access tasks customizable in Settings — users can now edit, add, remove, and save up to 6 quick tasks |
